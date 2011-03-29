@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+	xmlns:g='urn:import:com.google.gwt.user.client.ui'
+	xmlns:v='urn:import:org.vectomatic.dnd'
+	xmlns:f='urn:import:org.vectomatic.file'>
+	<ui:style>
+	.customUpload {
+		visibility:hidden;
+		width:0;
+	}
+	.notice {
+		font-style:italic;
+	}
+	</ui:style>
+	<g:FlowPanel>
+		<g:Label styleName="{style.notice}">NOTE: None of the files you select on your filesystem will actually be uploaded to a server. The files are just loaded locally and displayed in your browser.</g:Label>
+		<g:Label>Click the browse button to select local SVG files to load</g:Label>
+		<f:FileUploadExt ui:field="fileUpload"/>
+		<g:Label>Same thing as above, but with a custom browse button</g:Label>
+		<f:FileUploadExt ui:field="customUpload" styleName="{style.customUpload}"/>
+		<g:Button text="Load SVG files" ui:field="browseBtn"/>
+		<g:Label>Alternatively, drag and drop your SVG files in this drop zone</g:Label>
+		<v:DropPanel ui:field="dropPanel"/>
+		<g:Label>Click this button to remove previously loaded SVG files</g:Label>
+		<g:Button ui:field="resetBtn" text="Reset" />
+		<g:FlowPanel ui:field="imagePanel"/>
+	</g:FlowPanel>
+</ui:UiBinder>
+        
