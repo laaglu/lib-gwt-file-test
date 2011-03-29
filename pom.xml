@@ -3,6 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.vectomatic</groupId>
 	<artifactId>lib-gwt-file-test</artifactId>
+	<packaging>war</packaging>
 	<version>0.1-SNAPSHOT</version>
 	<description>A demo program for lib-gwt-file</description>
 	<url>http://www.vectomatic.org/lib-gwt-file</url>
@@ -116,4 +117,92 @@
 			</plugin>
 		</plugins>
 	</build>
+	<reporting>
+		<plugins>
+			<plugin>
+				<!-- Lock down to 2.0.1 + no license report because of
+				http://jira.codehaus.org/browse/MPIR-150 -->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+				<version>2.0.1</version>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>index</report>
+							<report>dependencies</report>
+							<report>project-team</report>
+							<report>summary</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.6.1</version>
+				<configuration>
+					<aggregate>true</aggregate>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jxr-plugin</artifactId>
+				<configuration>
+					<aggregate>true</aggregate>
+				</configuration>
+			</plugin>
+		</plugins>
+	</reporting>
+	<distributionManagement>
+		<repository>
+			<id>${deployment.id}</id>
+			<name>maven repository</name>
+			<url>${deployment.root}/mvn</url>
+		</repository>
+		<snapshotRepository>
+			<id>snapshots</id>
+			<name>local nexus snapshot repository</name>
+			<url>http://localhost:8081/nexus/content/repositories/snapshots/</url>
+		</snapshotRepository>
+		<site>
+			<id>${deployment.id}</id>
+			<name>maven site</name>
+			<url>${deployment.root}/mvn-sites/${project.artifactId}</url>
+		</site>
+	</distributionManagement>
+	<profiles>
+		<!-- There are two build profiles: development and production
+		+ by default, the production profile is assumed
+		  It builds all GWT permutations and generates reports for the website
+		+ Use the '-P development' mvn flag, or within eclipse, set the
+		  Project > Properties > Maven > Active Maven Profiles to 'development'
+		  to activate the development profile
+		 -->
+		<profile>
+			<id>development</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<deployment.id>local-server</deployment.id>
+				<deployment.root>scp://localhost/var/www/vectomatic</deployment.root>
+ 				<!-- Build options for development mode -->
+    			<gwt.style>DETAILED</gwt.style>
+    			<gwt.logLevel>WARN</gwt.logLevel>
+    			<gwt.localWorkers>1</gwt.localWorkers>
+    		</properties>
+		</profile>
+		<profile>
+			<id>production</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<properties>
+ 				<!-- Build options for production mode -->
+    			<gwt.style>OBF</gwt.style>
+    			<gwt.logLevel>INFO</gwt.logLevel>
+    			<gwt.localWorkers>2</gwt.localWorkers>
+    		</properties>
+		</profile>
+	</profiles>
 </project>
