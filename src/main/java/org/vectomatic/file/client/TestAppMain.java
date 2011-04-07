@@ -20,6 +20,7 @@ package org.vectomatic.file.client;
 import org.vectomatic.dnd.DropPanel;
 import org.vectomatic.dom.svg.OMSVGRect;
 import org.vectomatic.dom.svg.OMSVGSVGElement;
+import org.vectomatic.dom.svg.OMSVGStyle;
 import org.vectomatic.dom.svg.ui.SVGImage;
 import org.vectomatic.dom.svg.utils.OMSVGParser;
 import org.vectomatic.dom.svg.utils.SVGConstants;
@@ -86,6 +87,7 @@ public class TestAppMain implements EntryPoint {
 		GWT.log("length=" + files.getLength());
 		for (File file : files) {
 			GWT.log("name=" + file.getName());
+			GWT.log("urn=" + file.getUrn());
 			String type = file.getType();
 			GWT.log("type=" + type);
 			if ("image/svg+xml".equals(type)) {
@@ -109,8 +111,9 @@ public class TestAppMain implements EntryPoint {
 								OMSVGRect bbox = svg.getBBox();
 								bbox.assignTo(viewBox);
 							}
-							svg.getWidth().getBaseVal().newValueSpecifiedUnits(Unit.PX, 150);
-							svg.getHeight().getBaseVal().newValueSpecifiedUnits(Unit.PX, 150);
+							OMSVGStyle style = svg.getStyle();
+							style.setWidth(150, Unit.PX);
+							style.setHeight(150, Unit.PX);
 							super.onAttach();
 				    	}
 					});
