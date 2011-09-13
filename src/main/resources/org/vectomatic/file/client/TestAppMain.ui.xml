@@ -34,14 +34,14 @@
 					and displayed in your browser.</i>
 			</p>
 		</g:HTML>
-		<g:Label>Click the browse button to select local SVG files to load</g:Label>
+		<g:Label>Click the browse button to select local SVG or PNG files to load</g:Label>
 		<f:FileUploadExt ui:field="fileUpload" />
 		<g:Label>Same thing as above, but with a custom browse button</g:Label>
 		<f:FileUploadExt ui:field="customUpload" styleName="{style.customUpload}" />
 		<g:Button text="Load SVG files" ui:field="browseBtn" />
-		<g:Label>Alternatively, drag and drop your SVG files in this drop zone</g:Label>
+		<g:Label>Alternatively, drag and drop your SVG or PNG files in this drop zone</g:Label>
 		<v:DropPanel ui:field="dropPanel" />
-		<g:Label>Click this button to remove previously loaded SVG files</g:Label>
+		<g:Label>Click this button to remove previously loaded SVG or PNG files</g:Label>
 		<g:Button ui:field="resetBtn" text="Reset" />
 		<g:FlowPanel ui:field="imagePanel" />
 	</g:FlowPanel>

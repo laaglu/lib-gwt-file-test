@@ -47,6 +47,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 
 public class TestAppMain implements EntryPoint {
@@ -92,9 +93,31 @@ public class TestAppMain implements EntryPoint {
 			GWT.log("type=" + type);
 			if ("image/svg+xml".equals(type)) {
 				addSvgImage(file);
+			} else if ("image/png".equals(type)) {
+				final FileReader reader = new FileReader();
+				reader.addLoadEndHandler(new LoadEndHandler() {
+					
+					@Override
+					public void onLoadEnd(LoadEndEvent event) {
+						try {
+							String result = reader.getResult();
+							String url = "data:image/png;base64," + base64encode(result);
+							imagePanel.add(new Image(url));
+						} catch(Throwable t) {
+							GWT.log("PNG loading error: ", t);
+						}
+						
+					}
+				});
+				reader.readAsBinaryString(file);
 			}
 		}		
 	}
+	
+	private static native String base64encode(String str) /*-{
+		return $wnd.btoa(str);
+	}-*/;
+
 	
 	private void addSvgImage(final File file) {
 		final FileReader reader = new FileReader();
