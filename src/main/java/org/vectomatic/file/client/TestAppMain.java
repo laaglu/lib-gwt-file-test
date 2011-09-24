@@ -17,6 +17,7 @@
  **********************************************/
 package org.vectomatic.file.client;
 
+import org.vectomatic.dnd.DataTransferExt;
 import org.vectomatic.dnd.DropPanel;
 import org.vectomatic.dom.svg.OMSVGRect;
 import org.vectomatic.dom.svg.OMSVGSVGElement;
@@ -28,10 +29,6 @@ import org.vectomatic.file.File;
 import org.vectomatic.file.FileList;
 import org.vectomatic.file.FileReader;
 import org.vectomatic.file.FileUploadExt;
-import org.vectomatic.file.events.DragEnterEvent;
-import org.vectomatic.file.events.DragLeaveEvent;
-import org.vectomatic.file.events.DragOverEvent;
-import org.vectomatic.file.events.DropEvent;
 import org.vectomatic.file.events.LoadEndEvent;
 import org.vectomatic.file.events.LoadEndHandler;
 
@@ -42,6 +39,10 @@ import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.DragEnterEvent;
+import com.google.gwt.event.dom.client.DragLeaveEvent;
+import com.google.gwt.event.dom.client.DragOverEvent;
+import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -197,7 +198,7 @@ public class TestAppMain implements EntryPoint {
 	
 	@UiHandler("dropPanel")
 	public void onDrop(DropEvent event) {
-		processFiles(event.getDataTransfer().getFiles());
+		processFiles(event.getDataTransfer().<DataTransferExt>cast().getFiles());
 		setBorderColor(SVGConstants.CSS_BLACK_VALUE);
 		event.stopPropagation();
 		event.preventDefault();
