@@ -3,7 +3,7 @@
 	<groupId>org.vectomatic</groupId>
 	<artifactId>lib-gwt-file-test</artifactId>
 	<packaging>war</packaging>
-	<version>0.3</version>
+	<version>0.4-SNAPSHOT</version>
 	<name>lib-gwt-file-test</name>
 	<description>A demo program for lib-gwt-file</description>
 	<url>http://www.vectomatic.org/lib-gwt-file</url>
@@ -14,9 +14,9 @@
 		</license>
 	</licenses>
 	<scm>
-		<url>http://code.google.com/p/lib-gwt-file/source/browse/#svn/lib-gwt-file-test/tags/0.3</url>
-		<connection>scm:svn:http://lib-gwt-file.googlecode.com/svn/lib-gwt-file-test/tags/0.3</connection>
-		<developerConnection>scm:svn:file:///home/laaglu/svn/lib-gwt-file/lib-gwt-file-test/tags/0.3</developerConnection>
+		<url>http://code.google.com/p/lib-gwt-file/source/browse/#svn/lib-gwt-file-test/trunk</url>
+		<connection>scm:svn:http://lib-gwt-file.googlecode.com/svn/lib-gwt-file-test/trunk</connection>
+		<developerConnection>scm:svn:file:///home/laaglu/svn/lib-gwt-file/lib-gwt-file-test/trunk</developerConnection>
 	</scm>
 	<developers>
 		<developer>
