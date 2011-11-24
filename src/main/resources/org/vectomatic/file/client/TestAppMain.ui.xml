@@ -7,6 +7,25 @@
 			visibility: hidden;
 			width: 0;
 		}
+		.dropPanel {
+			position:relative;
+			width:150px;
+			height:150px;
+			border:1px solid black;
+		}
+		.dropPanel div {
+			width:150px;
+			position:absolute; 
+			font-size: 10px; 
+			padding: 2px 2px; 
+			overflow: hidden; 
+			text-align: center; 
+			top:50%; 
+			height: 2em; 
+			margin-top:-1em;
+			color:gray;
+		}
+		
 	</ui:style>
 	<g:FlowPanel>
 		<g:HTML>
@@ -40,7 +59,7 @@
 		<f:FileUploadExt ui:field="customUpload" styleName="{style.customUpload}" />
 		<g:Button text="Load SVG files" ui:field="browseBtn" />
 		<g:Label>Alternatively, drag and drop your SVG or PNG files in this drop zone</g:Label>
-		<v:DropPanel ui:field="dropPanel" />
+		<v:DropPanel ui:field="dropPanel" styleName="{style.dropPanel}"/>
 		<g:Label>Click this button to remove previously loaded SVG or PNG files</g:Label>
 		<g:Button ui:field="resetBtn" text="Reset" />
 		<g:FlowPanel ui:field="imagePanel" />

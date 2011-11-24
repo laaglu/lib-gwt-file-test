@@ -25,27 +25,34 @@ import org.vectomatic.dom.svg.OMSVGStyle;
 import org.vectomatic.dom.svg.ui.SVGImage;
 import org.vectomatic.dom.svg.utils.OMSVGParser;
 import org.vectomatic.dom.svg.utils.SVGConstants;
+import org.vectomatic.file.ErrorCode;
 import org.vectomatic.file.File;
+import org.vectomatic.file.FileError;
 import org.vectomatic.file.FileList;
 import org.vectomatic.file.FileReader;
 import org.vectomatic.file.FileUploadExt;
+import org.vectomatic.file.events.ErrorEvent;
+import org.vectomatic.file.events.ErrorHandler;
 import org.vectomatic.file.events.LoadEndEvent;
 import org.vectomatic.file.events.LoadEndHandler;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.DragEnterEvent;
 import com.google.gwt.event.dom.client.DragLeaveEvent;
 import com.google.gwt.event.dom.client.DragOverEvent;
 import com.google.gwt.event.dom.client.DropEvent;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -72,12 +79,8 @@ public class TestAppMain implements EntryPoint {
 	@Override
 	public void onModuleLoad() {
 		FlowPanel flowPanel = binder.createAndBindUi(this);
-		
-		final Style style = dropPanel.getElement().getStyle();
-		style.setWidth(150, Unit.PX);
-		style.setHeight(150, Unit.PX);
-		style.setBorderStyle(BorderStyle.SOLID);
-		setBorderColor(SVGConstants.CSS_BLACK_VALUE);
+		Document document = Document.get();
+		dropPanel.getElement().appendChild(document.createDivElement()).appendChild(document.createTextNode("Drop files here"));		
 		RootLayoutPanel.get().add(flowPanel);
 	}
 	
@@ -89,27 +92,59 @@ public class TestAppMain implements EntryPoint {
 		GWT.log("length=" + files.getLength());
 		for (File file : files) {
 			GWT.log("name=" + file.getName());
-			GWT.log("urn=" + file.getUrn());
-			String type = file.getType();
+			final String type = file.getType();
 			GWT.log("type=" + type);
 			if ("image/svg+xml".equals(type)) {
 				addSvgImage(file);
-			} else if ("image/png".equals(type)) {
+			} else if (type.startsWith("image/")) {
 				final FileReader reader = new FileReader();
 				reader.addLoadEndHandler(new LoadEndHandler() {
 					
 					@Override
 					public void onLoadEnd(LoadEndEvent event) {
 						try {
-							String result = reader.getResult();
-							String url = "data:image/png;base64," + base64encode(result);
-							imagePanel.add(new Image(url));
+							if (reader.getError() == null) {
+								String result = reader.getStringResult();
+								String url = "data:" + type + ";base64," + base64encode(result);
+								final Image image = new Image();
+								image.addLoadHandler(new LoadHandler() {
+									
+									@Override
+									public void onLoad(LoadEvent event) {
+										int width = image.getWidth();
+										int height = image.getHeight();
+										GWT.log("size=" + width + "x" + height);
+										float f = 150.0f / Math.max(width, height);
+										image.setPixelSize((int)(f * width), (int)(f * height));
+										imagePanel.getElement().getStyle().setVisibility(Visibility.VISIBLE);
+									}
+								});
+								imagePanel.add(image);
+								imagePanel.getElement().getStyle().setVisibility(Visibility.HIDDEN);
+								image.setUrl(url);
+							}
 						} catch(Throwable t) {
 							GWT.log("PNG loading error: ", t);
 						}
 						
 					}
 				});
+				
+ 				reader.addErrorHandler(new ErrorHandler() {
+					@Override
+					public void onError(ErrorEvent event) {
+						FileError error = reader.getError();
+						String errorDesc = "";
+						if (error != null) {
+							ErrorCode errorCode = error.getCode();
+							if (errorCode != null) {
+								errorDesc = ": " + errorCode.name();
+							}
+						}
+						Window.alert("File loading error" + errorDesc);									
+					}
+ 				});
+
 				reader.readAsBinaryString(file);
 			}
 		}		
@@ -127,7 +162,7 @@ public class TestAppMain implements EntryPoint {
 			@Override
 			public void onLoadEnd(LoadEndEvent event) {
 				try {
-					final OMSVGSVGElement svg = OMSVGParser.parse(reader.getResult());
+					final OMSVGSVGElement svg = OMSVGParser.parse(reader.getStringResult());
 					imagePanel.add(new SVGImage(svg) {
 				    	protected void onAttach() {
 				    		OMSVGRect viewBox = svg.getViewBox().getBaseVal();
@@ -144,7 +179,6 @@ public class TestAppMain implements EntryPoint {
 				} catch(Throwable t) {
 					GWT.log("SVG loading error: ", t);
 				}
-				
 			}
 		});
 		reader.readAsText(file);
