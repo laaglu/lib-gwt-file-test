@@ -2,12 +2,7 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
 	xmlns:g='urn:import:com.google.gwt.user.client.ui' xmlns:v='urn:import:org.vectomatic.dnd'
 	xmlns:f='urn:import:org.vectomatic.file'>
-	<ui:style>
-		.customUpload {
-			visibility: hidden;
-			width: 0;
-		}
-	</ui:style>
+	<ui:with field='bundle' type='org.vectomatic.file.client.TestAppMain.TestAppMainBundle' />
 	<g:FlowPanel>
 		<g:HTML>
 			<table>
@@ -37,13 +32,13 @@
 		<g:Label>Click the browse button to select local SVG or PNG files to load</g:Label>
 		<f:FileUploadExt ui:field="fileUpload" />
 		<g:Label>Same thing as above, but with a custom browse button</g:Label>
-		<f:FileUploadExt ui:field="customUpload" styleName="{style.customUpload}" />
+		<f:FileUploadExt ui:field="customUpload" styleName="{bundle.css.customUpload}" />
 		<g:Button text="Load SVG files" ui:field="browseBtn" />
 		<g:Label>Alternatively, drag and drop your SVG or PNG files in this drop zone</g:Label>
-		<v:DropPanel ui:field="dropPanel" />
+		<v:DropPanel ui:field="dropPanel" styleName="{bundle.css.dropPanel}"/>
 		<g:Label>Click this button to remove previously loaded SVG or PNG files</g:Label>
 		<g:Button ui:field="resetBtn" text="Reset" />
-		<g:FlowPanel ui:field="imagePanel" />
+		<g:FlowPanel ui:field="imagePanel"  styleName="{bundle.css.imagePanel}" />
 	</g:FlowPanel>
 </ui:UiBinder>
         
