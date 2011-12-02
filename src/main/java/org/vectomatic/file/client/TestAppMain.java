@@ -17,11 +17,13 @@
  **********************************************/
 package org.vectomatic.file.client;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.vectomatic.dnd.DataTransferExt;
 import org.vectomatic.dnd.DropPanel;
 import org.vectomatic.dom.svg.OMSVGRect;
 import org.vectomatic.dom.svg.OMSVGSVGElement;
-import org.vectomatic.dom.svg.OMSVGStyle;
 import org.vectomatic.dom.svg.ui.SVGImage;
 import org.vectomatic.dom.svg.utils.OMSVGParser;
 import org.vectomatic.dom.svg.utils.SVGConstants;
@@ -38,9 +40,9 @@ import org.vectomatic.file.events.LoadEndHandler;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsDate;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.DragEnterEvent;
@@ -49,6 +51,8 @@ import com.google.gwt.event.dom.client.DragOverEvent;
 import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -56,7 +60,10 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Widget;
 
 public class TestAppMain implements EntryPoint {
 	@UiField
@@ -72,16 +79,79 @@ public class TestAppMain implements EntryPoint {
 	@UiField
 	FlowPanel imagePanel;
 	
+	@UiField(provided=true)
+	static TestAppMainBundle bundle = GWT.create(TestAppMainBundle.class);
+	protected FileReader reader;
+	protected List<File> readQueue;
+	
     interface TestAppMainBinder extends UiBinder<FlowPanel, TestAppMain> {
     }
     private static TestAppMainBinder binder = GWT.create(TestAppMainBinder.class);
+    interface TestAppMainCss extends CssResource {
+    	public String imagePanel();
+    	public String customUpload();
+    	public String dropPanel();
+    	public String thumbnail();
+    	@ClassName("thumbnail-image")
+		public String thumbnailImage();
+    	@ClassName("thumbnail-text")
+		public String thumbnailText();
+    }
+    interface TestAppMainBundle extends ClientBundle {
+    	@Source("TestAppMainCss.css")
+    	public TestAppMainCss css();
+    }
 
 	@Override
 	public void onModuleLoad() {
+		bundle.css().ensureInjected();
 		FlowPanel flowPanel = binder.createAndBindUi(this);
 		Document document = Document.get();
 		dropPanel.getElement().appendChild(document.createDivElement()).appendChild(document.createTextNode("Drop files here"));		
 		RootLayoutPanel.get().add(flowPanel);
+		
+		reader = new FileReader();
+		reader.addLoadEndHandler(new LoadEndHandler() {
+			@Override
+			public void onLoadEnd(LoadEndEvent event) {
+				if (reader.getError() == null) {
+					if (readQueue.size() > 0) {
+						File file = readQueue.get(0);
+						try {
+							imagePanel.add(createThumbnail(file));
+						} finally {
+							readQueue.remove(0);
+							readNext();
+						}
+					}
+				}
+			}
+		});
+		
+		reader.addErrorHandler(new ErrorHandler() {
+			@Override
+			public void onError(ErrorEvent event) {
+				if (readQueue.size() > 0) {
+					File file = readQueue.get(0);
+					handleError(file);
+					readQueue.remove(0);
+					readNext();
+				}
+			}
+		});
+		readQueue = new ArrayList<File>();
+	}
+	
+	private void handleError(File file) {
+		FileError error = reader.getError();
+		String errorDesc = "";
+		if (error != null) {
+			ErrorCode errorCode = error.getCode();
+			if (errorCode != null) {
+				errorDesc = ": " + errorCode.name();
+			}
+		}
+		Window.alert("File loading error for file: " + file.getName() + "\n" + errorDesc);
 	}
 	
 	private void setBorderColor(String color) {
@@ -91,98 +161,99 @@ public class TestAppMain implements EntryPoint {
 	private void processFiles(FileList files) {
 		GWT.log("length=" + files.getLength());
 		for (File file : files) {
-			GWT.log("name=" + file.getName());
-			final String type = file.getType();
-			GWT.log("type=" + type);
-			if ("image/svg+xml".equals(type)) {
-				addSvgImage(file);
-			} else if (type.startsWith("image/")) {
-				final FileReader reader = new FileReader();
-				reader.addLoadEndHandler(new LoadEndHandler() {
-					
-					@Override
-					public void onLoadEnd(LoadEndEvent event) {
-						try {
-							if (reader.getError() == null) {
-								String result = reader.getStringResult();
-								String url = "data:" + type + ";base64," + base64encode(result);
-								final Image image = new Image();
-								image.addLoadHandler(new LoadHandler() {
-									
-									@Override
-									public void onLoad(LoadEvent event) {
-										int width = image.getWidth();
-										int height = image.getHeight();
-										GWT.log("size=" + width + "x" + height);
-										float f = 150.0f / Math.max(width, height);
-										image.setPixelSize((int)(f * width), (int)(f * height));
-										imagePanel.getElement().getStyle().setVisibility(Visibility.VISIBLE);
-									}
-								});
-								imagePanel.add(image);
-								imagePanel.getElement().getStyle().setVisibility(Visibility.HIDDEN);
-								image.setUrl(url);
-							}
-						} catch(Throwable t) {
-							GWT.log("PNG loading error: ", t);
-						}
-						
-					}
-				});
-				
- 				reader.addErrorHandler(new ErrorHandler() {
-					@Override
-					public void onError(ErrorEvent event) {
-						FileError error = reader.getError();
-						String errorDesc = "";
-						if (error != null) {
-							ErrorCode errorCode = error.getCode();
-							if (errorCode != null) {
-								errorDesc = ": " + errorCode.name();
-							}
-						}
-						Window.alert("File loading error" + errorDesc);									
-					}
- 				});
-
-				reader.readAsBinaryString(file);
+			readQueue.add(file);
+		}
+		readNext();
+	}
+	
+	private void readNext() {
+		if (readQueue.size() > 0) {
+			File file = readQueue.get(0);
+			String type = file.getType();
+			try {
+				if ("image/svg+xml".equals(type)) {
+					reader.readAsText(file);	
+				} else if (type.startsWith("image/")) {
+					reader.readAsBinaryString(file);
+				}
+			} catch(Throwable t) {
+				// Necessary for FF (see bug https://bugzilla.mozilla.org/show_bug.cgi?id=701154)
+				// Standard-complying browsers will to go in this branch
+				handleError(file);
+				readQueue.remove(0);
+				readNext();
 			}
-		}		
+		}
 	}
 	
 	private static native String base64encode(String str) /*-{
 		return $wnd.btoa(str);
 	}-*/;
 
-	
-	private void addSvgImage(final File file) {
-		final FileReader reader = new FileReader();
-		reader.addLoadEndHandler(new LoadEndHandler() {
-			
-			@Override
-			public void onLoadEnd(LoadEndEvent event) {
-				try {
-					final OMSVGSVGElement svg = OMSVGParser.parse(reader.getStringResult());
-					imagePanel.add(new SVGImage(svg) {
-				    	protected void onAttach() {
-				    		OMSVGRect viewBox = svg.getViewBox().getBaseVal();
-							if (viewBox.getWidth() == 0 || viewBox.getHeight() == 0) {
-								OMSVGRect bbox = svg.getBBox();
-								bbox.assignTo(viewBox);
-							}
-							OMSVGStyle style = svg.getStyle();
-							style.setWidth(150, Unit.PX);
-							style.setHeight(150, Unit.PX);
-							super.onAttach();
-				    	}
-					});
-				} catch(Throwable t) {
-					GWT.log("SVG loading error: ", t);
-				}
-			}
-		});
-		reader.readAsText(file);
+	private FlowPanel createThumbnail(File file) {
+		FlowPanel thumbnail = new FlowPanel();
+		thumbnail.setStyleName(bundle.css().thumbnail());
+		String type = file.getType();
+		final String name = file.getName();
+		final JsDate date = file.getLastModifiedDate();
 		
+		Widget image = null;
+		if ("image/svg+xml".equals(type)) {
+			image = createSvgImage();
+		} else if (type.startsWith("image/")) {
+			image = createBitmapImage(file);
+		}
+		SimplePanel thumbnailImage = new SimplePanel(image);
+		thumbnailImage.setStyleName(bundle.css().thumbnailImage());
+		thumbnail.add(thumbnailImage);
+		
+		StringBuilder description = new StringBuilder(name);
+		if (date != null) {
+			description.append(" (");
+			description.append(date.toLocaleDateString());
+			description.append(")");
+		}
+		Label thumbnailText = new Label(description.toString());
+		thumbnailText.setStyleName(bundle.css().thumbnailText());
+		thumbnail.add(thumbnailText);
+		return thumbnail;
+	}
+	
+	private SVGImage createSvgImage() {
+		GWT.log(reader.getStringResult());
+		final OMSVGSVGElement svg = OMSVGParser.parse(reader.getStringResult());
+		return new SVGImage(svg) {
+	    	protected void onAttach() {
+	    		OMSVGRect viewBox = svg.getViewBox().getBaseVal();
+				if (viewBox.getWidth() == 0 || viewBox.getHeight() == 0) {
+					OMSVGRect bbox = svg.getBBox();
+					bbox.assignTo(viewBox);
+				}
+				svg.getStyle().setWidth(150, Unit.PX);
+				svg.getStyle().setHeight(150, Unit.PX);
+				super.onAttach();
+	    	}
+		};
+	}
+	
+	private Image createBitmapImage(final File file) {
+		String result = reader.getStringResult();
+		String url = "data:" + file.getType() + ";base64," + base64encode(result);
+		final Image image = new Image();
+		image.setVisible(false);
+		image.addLoadHandler(new LoadHandler() {
+			@Override
+			public void onLoad(LoadEvent event) {
+				int width = image.getWidth();
+				int height = image.getHeight();
+				GWT.log("size=" + width + "x" + height);
+				float f = 150.0f / Math.max(width, height);
+				image.setPixelSize((int)(f * width), (int)(f * height));
+				image.setVisible(true);
+			}			
+		});
+		image.setUrl(url);
+		return image;			
 	}
 
 	@UiHandler("browseBtn")

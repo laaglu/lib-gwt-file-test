@@ -1,0 +1,51 @@
+@CHARSET "UTF-8";
+@external gwt-Label;
+
+.imagePanel {
+	width:100%;
+}
+.customUpload {
+	visibility: hidden;
+	width: 0;
+}
+.dropPanel {
+	position:relative;
+	width:150px;
+	height:100px;
+	border:1px solid black;
+}
+.dropPanel div {
+	width:150px;
+	position:absolute; 
+	font-size: 10px; 
+	padding: 2px 2px; 
+	overflow: hidden; 
+	text-align: center; 
+	top:50%; 
+	height: 2em; 
+	margin-top:-1em;
+	color:gray;
+}
+.thumbnail {
+	width:150px;
+	height:180px;
+	float:left;
+}
+
+.thumbnail-image {
+	width:150px;
+	height:150px;
+}
+
+.thumbnail-text {
+	width:150px;
+	height:30px;
+	margin:0px 2px;
+	font-size: 10px;
+	text-overflow: ellipsis;
+	overflow:hidden;
+	border: 1px solid gray;
+	background: #F2E1ED;
+	text-align: center;
+	word-wrap:break-word;
+}
