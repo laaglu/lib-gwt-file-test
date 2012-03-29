@@ -49,3 +49,12 @@
 	text-align: center;
 	word-wrap:break-word;
 }
+.txt {
+	margin-left:2px;
+	width:144px;
+	height:144px;
+	border:1px solid black;
+	padding: 3px 3px;
+	font: 6px arial,helvetica,sans-serif;
+	overflow:hidden;
+}

@@ -2,3 +2,4 @@
 /target
 /gwt-unitCache
 /war/WEB-INF/deploy
+/war/org.vectomatic.file.TestApp

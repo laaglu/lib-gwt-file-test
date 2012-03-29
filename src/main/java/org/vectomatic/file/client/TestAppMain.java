@@ -27,6 +27,7 @@ import org.vectomatic.dom.svg.OMSVGSVGElement;
 import org.vectomatic.dom.svg.ui.SVGImage;
 import org.vectomatic.dom.svg.utils.OMSVGParser;
 import org.vectomatic.dom.svg.utils.SVGConstants;
+import org.vectomatic.file.Blob;
 import org.vectomatic.file.ErrorCode;
 import org.vectomatic.file.File;
 import org.vectomatic.file.FileError;
@@ -96,6 +97,8 @@ public class TestAppMain implements EntryPoint {
 		public String thumbnailImage();
     	@ClassName("thumbnail-text")
 		public String thumbnailText();
+    	@ClassName("txt")
+		public String text();
     }
     interface TestAppMainBundle extends ClientBundle {
     	@Source("TestAppMainCss.css")
@@ -175,6 +178,13 @@ public class TestAppMain implements EntryPoint {
 					reader.readAsText(file);	
 				} else if (type.startsWith("image/")) {
 					reader.readAsBinaryString(file);
+				} else if (type.startsWith("text/")) {
+					// If the file is larger than 1kb, read only the first 1000 characters
+					Blob blob = file;
+					if (file.getSize() > 0) {
+						blob = file.slice(0, 1000, "text/plain; charset=utf-8");
+					}
+					reader.readAsText(blob);
 				}
 			} catch(Throwable t) {
 				// Necessary for FF (see bug https://bugzilla.mozilla.org/show_bug.cgi?id=701154)
@@ -202,6 +212,8 @@ public class TestAppMain implements EntryPoint {
 			image = createSvgImage();
 		} else if (type.startsWith("image/")) {
 			image = createBitmapImage(file);
+		} else if (type.startsWith("text/")) {
+			image = createText(file);
 		}
 		SimplePanel thumbnailImage = new SimplePanel(image);
 		thumbnailImage.setStyleName(bundle.css().thumbnailImage());
@@ -256,6 +268,14 @@ public class TestAppMain implements EntryPoint {
 		return image;			
 	}
 
+	private FlowPanel createText(final File file) {
+		String result = reader.getStringResult();
+		FlowPanel panel = new FlowPanel();
+		panel.getElement().appendChild(Document.get().createTextNode(result));
+		panel.addStyleName(bundle.css().text());
+		return panel;
+	}
+	
 	@UiHandler("browseBtn")
 	public void browse(ClickEvent event) {
 		customUpload.click();
