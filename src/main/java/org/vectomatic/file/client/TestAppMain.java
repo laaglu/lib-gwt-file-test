@@ -25,6 +25,7 @@ import org.vectomatic.dnd.DropPanel;
 import org.vectomatic.dom.svg.OMSVGRect;
 import org.vectomatic.dom.svg.OMSVGSVGElement;
 import org.vectomatic.dom.svg.ui.SVGImage;
+import org.vectomatic.dom.svg.utils.DOMHelper;
 import org.vectomatic.dom.svg.utils.OMSVGParser;
 import org.vectomatic.dom.svg.utils.SVGConstants;
 import org.vectomatic.file.Blob;
@@ -196,10 +197,6 @@ public class TestAppMain implements EntryPoint {
 		}
 	}
 	
-	private static native String base64encode(String str) /*-{
-		return $wnd.btoa(str);
-	}-*/;
-
 	private FlowPanel createThumbnail(File file) {
 		FlowPanel thumbnail = new FlowPanel();
 		thumbnail.setStyleName(bundle.css().thumbnail());
@@ -250,7 +247,7 @@ public class TestAppMain implements EntryPoint {
 	
 	private Image createBitmapImage(final File file) {
 		String result = reader.getStringResult();
-		String url = "data:" + file.getType() + ";base64," + base64encode(result);
+		String url = "data:" + file.getType() + ";base64," + DOMHelper.base64encode(result);
 		final Image image = new Image();
 		image.setVisible(false);
 		image.addLoadHandler(new LoadHandler() {
