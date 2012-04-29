@@ -25,7 +25,6 @@ import org.vectomatic.dnd.DropPanel;
 import org.vectomatic.dom.svg.OMSVGRect;
 import org.vectomatic.dom.svg.OMSVGSVGElement;
 import org.vectomatic.dom.svg.ui.SVGImage;
-import org.vectomatic.dom.svg.utils.DOMHelper;
 import org.vectomatic.dom.svg.utils.OMSVGParser;
 import org.vectomatic.dom.svg.utils.SVGConstants;
 import org.vectomatic.file.Blob;
@@ -35,6 +34,7 @@ import org.vectomatic.file.FileError;
 import org.vectomatic.file.FileList;
 import org.vectomatic.file.FileReader;
 import org.vectomatic.file.FileUploadExt;
+import org.vectomatic.file.FileUtils;
 import org.vectomatic.file.events.ErrorEvent;
 import org.vectomatic.file.events.ErrorHandler;
 import org.vectomatic.file.events.LoadEndEvent;
@@ -247,7 +247,7 @@ public class TestAppMain implements EntryPoint {
 	
 	private Image createBitmapImage(final File file) {
 		String result = reader.getStringResult();
-		String url = "data:" + file.getType() + ";base64," + DOMHelper.base64encode(result);
+		String url = FileUtils.createDataUrl(file.getType(), result);
 		final Image image = new Image();
 		image.setVisible(false);
 		image.addLoadHandler(new LoadHandler() {
