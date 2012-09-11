@@ -20,6 +20,8 @@ package org.vectomatic.file.client;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.vectomatic.arrays.ArrayBuffer;
+import org.vectomatic.arrays.Int8Array;
 import org.vectomatic.dnd.DataTransferExt;
 import org.vectomatic.dnd.DropPanel;
 import org.vectomatic.dom.svg.OMSVGRect;
@@ -68,6 +70,16 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class TestAppMain implements EntryPoint {
+    private static final char[] BASE64_CHARS = {
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 
+        'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 
+        'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 
+        'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 
+        'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 
+        'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', 
+        '8', '9', '+', '/'
+    };
+    private static final char BASE64_PADDING = '=';
 	@UiField
 	Button resetBtn;
 	@UiField
@@ -80,6 +92,7 @@ public class TestAppMain implements EntryPoint {
 	FileUploadExt customUpload;
 	@UiField
 	FlowPanel imagePanel;
+	boolean useTypedArrays;
 	
 	@UiField(provided=true)
 	static TestAppMainBundle bundle = GWT.create(TestAppMainBundle.class);
@@ -108,6 +121,7 @@ public class TestAppMain implements EntryPoint {
 
 	@Override
 	public void onModuleLoad() {
+		useTypedArrays = "typedArrays".equals(Window.Location.getParameter("mode"));
 		bundle.css().ensureInjected();
 		FlowPanel flowPanel = binder.createAndBindUi(this);
 		Document document = Document.get();
@@ -178,7 +192,11 @@ public class TestAppMain implements EntryPoint {
 				if ("image/svg+xml".equals(type)) {
 					reader.readAsText(file);	
 				} else if (type.startsWith("image/")) {
-					reader.readAsBinaryString(file);
+					if (useTypedArrays) {
+						reader.readAsArrayBuffer(file);
+					} else {
+						reader.readAsBinaryString(file);
+					}
 				} else if (type.startsWith("text/")) {
 					// If the file is larger than 1kb, read only the first 1000 characters
 					Blob blob = file;
@@ -246,8 +264,15 @@ public class TestAppMain implements EntryPoint {
 	}
 	
 	private Image createBitmapImage(final File file) {
-		String result = reader.getStringResult();
-		String url = FileUtils.createDataUrl(file.getType(), result);
+		String url;
+		if (useTypedArrays) {
+			ArrayBuffer buffer = reader.getArrayBufferResult();
+			Int8Array array = Int8Array.createInt8Array(buffer);
+			url = "data:" + file.getType() + ";base64," + toBase64(array);
+		} else {
+			String result = reader.getStringResult();
+			url = FileUtils.createDataUrl(file.getType(), result);
+		}
 		final Image image = new Image();
 		image.setVisible(false);
 		image.addLoadHandler(new LoadHandler() {
@@ -325,5 +350,45 @@ public class TestAppMain implements EntryPoint {
 		event.stopPropagation();
 		event.preventDefault();
 	}
+
+    public static String toBase64(Int8Array array) {
+    	// Manual conversion to base64. There are probably smarter ways
+    	// to do this but the goal is to demonstrate typed arrays.
+    	StringBuilder builder = new StringBuilder();
+    	int length = array.getByteLength();
+        if (length > 0) {
+	        char[] charArray = new char[4];
+	        int ix = 0;
+	         while (length >= 3) {
+	            int i = ((array.get(ix) & 0xff)<<16)
+	                + ((array.get(ix+1) & 0xff)<<8)
+	                + (array.get(ix+2) & 0xff);
+	            charArray[0] = BASE64_CHARS[i>>18];
+	            charArray[1] = BASE64_CHARS[(i>>12) & 0x3f];
+	            charArray[2] = BASE64_CHARS[(i>>6) & 0x3f];
+	            charArray[3] = BASE64_CHARS[i & 0x3f];
+	            builder.append(charArray);
+	            ix += 3;
+	            length -= 3;
+	        }
+	        if (length == 1) {
+	            int i = array.get(ix)&0xff;
+	            charArray[0] = BASE64_CHARS[i>>2];
+	            charArray[1] = BASE64_CHARS[(i<<4)&0x3f];
+	            charArray[2] = BASE64_PADDING;
+	            charArray[3] = BASE64_PADDING;
+	            builder.append(charArray);
+	        } else if (length == 2) {
+	            int i = ((array.get(ix) & 0xff)<<8)
+	            	+ (array.get(ix+1) & 0xff);
+	            charArray[0] = BASE64_CHARS[i>>10];
+	            charArray[1] = BASE64_CHARS[(i>>4) & 0x3f];
+	            charArray[2] = BASE64_CHARS[(i<<2) & 0x3f];
+	            charArray[3] = BASE64_PADDING;
+	            builder.append(charArray);
+	        }
+        }
+        return builder.toString();
+    }
 
 }
