@@ -20,8 +20,6 @@ package org.vectomatic.file.client;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.vectomatic.arrays.ArrayBuffer;
-import org.vectomatic.arrays.Int8Array;
 import org.vectomatic.dnd.DataTransferExt;
 import org.vectomatic.dnd.DropPanel;
 import org.vectomatic.dom.svg.OMSVGRect;
@@ -57,6 +55,9 @@ import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.typedarrays.client.Int8ArrayNative;
+import com.google.gwt.typedarrays.shared.ArrayBuffer;
+import com.google.gwt.typedarrays.shared.Int8Array;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -267,7 +268,7 @@ public class TestAppMain implements EntryPoint {
 		String url;
 		if (useTypedArrays) {
 			ArrayBuffer buffer = reader.getArrayBufferResult();
-			Int8Array array = Int8Array.createInt8Array(buffer);
+			Int8Array array = Int8ArrayNative.create(buffer);
 			url = "data:" + file.getType() + ";base64," + toBase64(array);
 		} else {
 			String result = reader.getStringResult();
@@ -355,7 +356,7 @@ public class TestAppMain implements EntryPoint {
     	// Manual conversion to base64. There are probably smarter ways
     	// to do this but the goal is to demonstrate typed arrays.
     	StringBuilder builder = new StringBuilder();
-    	int length = array.getByteLength();
+    	int length = array.length();
         if (length > 0) {
 	        char[] charArray = new char[4];
 	        int ix = 0;
