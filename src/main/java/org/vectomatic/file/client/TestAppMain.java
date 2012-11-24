@@ -123,7 +123,8 @@ public class TestAppMain implements EntryPoint {
 
 	@Override
 	public void onModuleLoad() {
-		useTypedArrays = "typedArrays".equals(Window.Location.getParameter("mode"));
+		// Use typed arrays by default
+		useTypedArrays = !"false".equals(Window.Location.getParameter("typedArrays"));
 		bundle.css().ensureInjected();
 		FlowPanel flowPanel = binder.createAndBindUi(this);
 		Document document = Document.get();
