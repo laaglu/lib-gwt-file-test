@@ -44,6 +44,7 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsDate;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -280,10 +281,20 @@ public class TestAppMain implements EntryPoint {
 			@Override
 			public void onLoad(LoadEvent event) {
 				int width = image.getWidth();
+				if (width == 0) {
+					width = ieWidth(image.getElement());
+				}
 				int height = image.getHeight();
+				if (height == 0) {
+					height = ieHeight(image.getElement());
+				}
 				GWT.log("size=" + width + "x" + height);
 				float f = 150.0f / Math.max(width, height);
-				image.setPixelSize((int)(f * width), (int)(f * height));
+				int w = (int)(f * width);
+				int h = (int)(f * height);
+				image.setPixelSize(w, h);
+				image.getElement().getStyle().setWidth(w, Unit.PX);
+				image.getElement().getStyle().setHeight(h, Unit.PX);
 				image.setVisible(true);
 			}			
 		});
@@ -392,4 +403,11 @@ public class TestAppMain implements EntryPoint {
         return builder.toString();
     }
 
+    // For that piece of crap called IE
+    private static native int ieWidth(Element elt) /*-{
+	  return elt.naturalWidth;
+	}-*/;
+    private static native int ieHeight(Element elt) /*-{
+	  return elt.naturalHeight;
+	}-*/;
 }
