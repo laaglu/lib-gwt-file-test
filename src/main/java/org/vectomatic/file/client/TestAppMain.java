@@ -94,10 +94,10 @@ public class TestAppMain implements EntryPoint {
 	FileUploadExt customUpload;
 	@UiField
 	FlowPanel imagePanel;
-	boolean useTypedArrays;
-	
 	@UiField(provided=true)
 	static TestAppMainBundle bundle = GWT.create(TestAppMainBundle.class);
+
+	protected boolean useTypedArrays;
 	protected FileReader reader;
 	protected List<File> readQueue;
 	
@@ -125,14 +125,23 @@ public class TestAppMain implements EntryPoint {
 	public void onModuleLoad() {
 		// Use typed arrays by default
 		useTypedArrays = !"false".equals(Window.Location.getParameter("typedArrays"));
+		
+		// Create UI main elements
 		bundle.css().ensureInjected();
 		FlowPanel flowPanel = binder.createAndBindUi(this);
 		Document document = Document.get();
 		dropPanel.getElement().appendChild(document.createDivElement()).appendChild(document.createTextNode("Drop files here"));		
 		RootLayoutPanel.get().add(flowPanel);
 		
+		// Create a file reader a and queue of files to read.
+		// UI event handler will populate this queue by calling queueFiles()
 		reader = new FileReader();
 		reader.addLoadEndHandler(new LoadEndHandler() {
+			/**
+			 * This handler is invoked when FileReader.readAsText(),
+			 * FileReader.readAsBinaryString() or FileReader.readAsArrayBuffer()
+			 * successfully completes
+			 */
 			@Override
 			public void onLoadEnd(LoadEndEvent event) {
 				if (reader.getError() == null) {
@@ -142,7 +151,7 @@ public class TestAppMain implements EntryPoint {
 							imagePanel.add(createThumbnail(file));
 						} finally {
 							readQueue.remove(0);
-							readNext();
+							readNextFile();
 						}
 					}
 				}
@@ -150,13 +159,18 @@ public class TestAppMain implements EntryPoint {
 		});
 		
 		reader.addErrorHandler(new ErrorHandler() {
+			/**
+			 * This handler is invoked when FileReader.readAsText(),
+			 * FileReader.readAsBinaryString() or FileReader.readAsArrayBuffer()
+			 * fails
+			 */
 			@Override
 			public void onError(ErrorEvent event) {
 				if (readQueue.size() > 0) {
 					File file = readQueue.get(0);
 					handleError(file);
 					readQueue.remove(0);
-					readNext();
+					readNextFile();
 				}
 			}
 		});
@@ -179,22 +193,42 @@ public class TestAppMain implements EntryPoint {
 		dropPanel.getElement().getStyle().setBorderColor(color);
 	}
 	
+	/**
+	 * Adds a collection of file the queue and begin processing them
+	 * @param files
+	 * The file to process
+	 */
 	private void processFiles(FileList files) {
 		GWT.log("length=" + files.getLength());
 		for (File file : files) {
 			readQueue.add(file);
 		}
-		readNext();
+		// Start processing the queue
+		readNextFile();
 	}
 	
-	private void readNext() {
+	/**
+	 * Processes the next file in the queue. Depending on the MIME type of the
+	 * file, a different way of loading the image is used to demonstrate all
+	 * parts of the API
+	 */
+	private void readNextFile() {
 		if (readQueue.size() > 0) {
 			File file = readQueue.get(0);
 			String type = file.getType();
 			try {
 				if ("image/svg+xml".equals(type)) {
 					reader.readAsText(file);	
+				} else if (type.startsWith("image/png")) {
+					// Do not use the FileReader for PNG.
+					// Take advantage of the fact the browser can
+					// provide a directly usable blob:// URL
+					imagePanel.add(createThumbnail(file));
+					readQueue.remove(0);
+					readNextFile();
 				} else if (type.startsWith("image/")) {
+					// For other image types (GIF, JPEG), load them
+					// as typed arrays
 					if (useTypedArrays) {
 						reader.readAsArrayBuffer(file);
 					} else {
@@ -202,6 +236,7 @@ public class TestAppMain implements EntryPoint {
 					}
 				} else if (type.startsWith("text/")) {
 					// If the file is larger than 1kb, read only the first 1000 characters
+					// to demonstrate file slicing
 					Blob blob = file;
 					if (file.getSize() > 0) {
 						blob = file.slice(0, 1000, "text/plain; charset=utf-8");
@@ -210,10 +245,10 @@ public class TestAppMain implements EntryPoint {
 				}
 			} catch(Throwable t) {
 				// Necessary for FF (see bug https://bugzilla.mozilla.org/show_bug.cgi?id=701154)
-				// Standard-complying browsers will to go in this branch
+				// Standard-complying browsers will not go in this branch
 				handleError(file);
 				readQueue.remove(0);
-				readNext();
+				readNextFile();
 			}
 		}
 	}
@@ -228,6 +263,8 @@ public class TestAppMain implements EntryPoint {
 		Widget image = null;
 		if ("image/svg+xml".equals(type)) {
 			image = createSvgImage();
+		} else if (type.startsWith("image/")) {
+			image = createPngImage(file);
 		} else if (type.startsWith("image/")) {
 			image = createBitmapImage(file);
 		} else if (type.startsWith("text/")) {
@@ -265,6 +302,20 @@ public class TestAppMain implements EntryPoint {
 	    	}
 		};
 	}
+
+	private Image createPngImage(final File file) {
+		final Image image = new Image();
+		final String url = FileUtils.createObjectURL(file);
+		image.addLoadHandler(new LoadHandler() {
+			@Override
+			public void onLoad(LoadEvent event) {
+				sizeBitmap(image);
+				FileUtils.revokeObjectURL(url);
+			}			
+		});
+		image.setUrl(url);
+		return image;			
+	}
 	
 	private Image createBitmapImage(final File file) {
 		String url;
@@ -281,26 +332,30 @@ public class TestAppMain implements EntryPoint {
 		image.addLoadHandler(new LoadHandler() {
 			@Override
 			public void onLoad(LoadEvent event) {
-				int width = image.getWidth();
-				if (width == 0) {
-					width = ieWidth(image.getElement());
-				}
-				int height = image.getHeight();
-				if (height == 0) {
-					height = ieHeight(image.getElement());
-				}
-				GWT.log("size=" + width + "x" + height);
-				float f = 150.0f / Math.max(width, height);
-				int w = (int)(f * width);
-				int h = (int)(f * height);
-				image.setPixelSize(w, h);
-				image.getElement().getStyle().setWidth(w, Unit.PX);
-				image.getElement().getStyle().setHeight(h, Unit.PX);
-				image.setVisible(true);
+				sizeBitmap(image);
 			}			
 		});
 		image.setUrl(url);
 		return image;			
+	}
+	
+	private void sizeBitmap(Image image) {
+		int width = image.getWidth();
+		if (width == 0) {
+			width = ieWidth(image.getElement());
+		}
+		int height = image.getHeight();
+		if (height == 0) {
+			height = ieHeight(image.getElement());
+		}
+		GWT.log("size=" + width + "x" + height);
+		float f = 150.0f / Math.max(width, height);
+		int w = (int)(f * width);
+		int h = (int)(f * height);
+		image.setPixelSize(w, h);
+		image.getElement().getStyle().setWidth(w, Unit.PX);
+		image.getElement().getStyle().setHeight(h, Unit.PX);
+		image.setVisible(true);		
 	}
 
 	private FlowPanel createText(final File file) {

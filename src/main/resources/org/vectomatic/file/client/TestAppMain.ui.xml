@@ -19,7 +19,7 @@
 				This program demonstrates <a href="http://www.vectomatic.org/lib-gwt-file">lib-gwt-file</a>, an open-source GWT library
 				to encapsulate the
 				<a href="http://www.w3.org/TR/FileAPI/">W3C file API</a>
-				. It has been tested with FF4 and Chromium 12. For more details,
+				. It has been tested with FF4+, Chromium 12+, Opera 12+, IE10+. For more details,
 				please visit
 				<a href="http://www.vectomatic.org/lib-gwt-file">http://www.vectomatic.org/lib-gwt-file.</a>
 			</p>
@@ -29,7 +29,7 @@
 					and displayed in your browser.</i>
 			</p>
 		</g:HTML>
-		<g:Label>Click the browse button to select local SVG, PNG or text files to load</g:Label>
+		<g:Label>Click the browse button to select local SVG, bitmap (png, gif, jpg) or text files to load</g:Label>
 		<f:FileUploadExt ui:field="fileUpload" />
 		<g:Label>Same thing as above, but with a custom browse button</g:Label>
 		<f:FileUploadExt ui:field="customUpload" styleName="{bundle.css.customUpload}" />
