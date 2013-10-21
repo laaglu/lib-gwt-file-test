@@ -7,7 +7,7 @@
 	</parent>
 	<artifactId>lib-gwt-file-test</artifactId>
 	<packaging>war</packaging>
-	<version>0.4.4-SNAPSHOT</version>
+	<version>0.4.4</version>
 	<name>lib-gwt-file-test</name>
 	<description>A demo program for lib-gwt-file</description>
 	<url>http://www.vectomatic.org/lib-gwt-file</url>
