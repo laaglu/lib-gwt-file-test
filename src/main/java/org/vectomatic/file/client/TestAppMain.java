@@ -263,7 +263,7 @@ public class TestAppMain implements EntryPoint {
 		Widget image = null;
 		if ("image/svg+xml".equals(type)) {
 			image = createSvgImage();
-		} else if (type.startsWith("image/")) {
+		} else if (type.startsWith("image/png")) {
 			image = createPngImage(file);
 		} else if (type.startsWith("image/")) {
 			image = createBitmapImage(file);
