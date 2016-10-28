@@ -27,13 +27,13 @@
 		<dependency>
 			<groupId>org.vectomatic</groupId>
 			<artifactId>lib-gwt-file</artifactId>
-			<version>0.3.6</version>
+			<version>0.3.7-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<!-- Must appear before gwt-user to allow injection of custom UiBinder parser in classpath -->
 			<groupId>org.vectomatic</groupId>
 			<artifactId>lib-gwt-svg</artifactId>
-			<version>0.5.11</version>
+			<version>0.5.12-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	<properties>
